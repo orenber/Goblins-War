@@ -14,8 +14,8 @@ class Nature:
         self.width = 700
         self.high = 500
 
-        self.images_path = ['BossGame', 'Resources', 'images']
-        self.sound_path = ['BossGame', 'Resources', 'sound']
+        self.images_path = ['LikeBoss', 'Resources', 'images']
+        self.sound_path = ['LikeBoss', 'Resources', 'sound']
         self.__background_file = 'bg.jpg'
         self.__music_file = 'music.mp3'
         self.create()
