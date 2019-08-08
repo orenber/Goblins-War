@@ -50,7 +50,7 @@ class Human(object):
         if images_path is None:
 
             self.__images_path = os.path.abspath(os.path.join(os.pardir,
-                                                              'BossGame', 'Resources', 'images'))
+                                                              'LikeBoss', 'Resources', 'images'))
         else:
             self.__images_path = images_path
 
