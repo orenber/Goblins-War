@@ -31,26 +31,30 @@ class Gun(Weapons):
             self.bullets.append(Bullet)
         pass
 
-    def shout(self):
+    def activate(self):
         for bullet in self.bullets:
 
-            if bullet.x < 500 and bullet.x > 0:
 
-                bullet.x += bullet.velocity
-            else:
-                self.bullets.pop(self.bullets.index(bullet))
+            bullet.x += bullet.velocity
+
+            self.bullets.pop(self.bullets.index(bullet))
 
         self.update_animation()
 
 
 
-class Bullet(Weapons):
+class Bullet():
 
     def __init__(self):
 
         self.x = 7
         self.y = 6
         self.velocity = 1
+
+    def shout(self,x,y):
+        pygame.draw.circle('')
+
+
 
 
 

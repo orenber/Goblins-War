@@ -17,16 +17,19 @@ class Human(object):
         self.__walkCount = 0
 
         # public attribute
+        self.health = 100
         self.position_x = setup['x']
         self.position_y = setup['y']
         self.position_z = setup['z']
         self.high = setup['high']
         self.width = setup['width']
+        self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
 
         self.images_path = None
         self.jumpCount = 10
         self.move_direction = 'center'
         self.walk_direction = setup['dir']
+
 
         self.bg = environment.background
 
@@ -90,7 +93,15 @@ class Human(object):
         self.char = self.load_image('standing.png')
         pass
 
+    def heal_bar(self):
+        self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
+        pygame.draw.rect( self.__environment.win, (0, 255, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 3) )
+        pygame.draw.rect( self.__environment.win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50-49*self.health/100, 3) )
+
+
     def draw(self):
+
+        self.heal_bar()
 
         if abs(self.__walkCount) >= 27:
             self.__walkCount = 0

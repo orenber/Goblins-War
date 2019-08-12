@@ -9,7 +9,7 @@ clock = pygame.time.Clock()
 
 
 e = Nature()
-e.play_sound()
+#e.play_sound()
 
 g = Goblin(e,x=520,y=410,dir='left')
 g.walk(-50)
@@ -22,11 +22,16 @@ g4.walk(-1)
 g5 = Goblin(e,x = 350,dir='left')
 g5.walk(-1)
 h = Human(e,x=200)
+h1 = Human(e,x=300)
 
 
 def redrawWindow():
     e.draw()
+    text_score = font.render('Score: ' + str(score), 1, (0,0,0))
+    e.win.blit(text_score,(490,10))
+
     h.draw()
+    h1.draw()
     g.draw()
     g2.draw()
     g3.draw()
@@ -37,9 +42,11 @@ def redrawWindow():
 
 
 
-
+score = 0
 speed = 100
 direction =-1
+# create font object
+font = pygame.font.SysFont('comicsans', 30, True)
 
 run = True
 while run:
@@ -72,11 +79,11 @@ while run:
     elif g3.position_x>=600:
         direction = -1
 
-    g3.walk(1.3*randrange(10)*direction)
-    g2.walk(1.2*randrange(10)*direction)
-    g.jump(randrange(10)*direction)
-    g4.walk(1.4*randrange(10)*direction)
-    g5.walk(1.5*randrange(10)*direction)
+    g3.walk(2*direction)
+    g2.walk(2*direction)
+    g.jump(direction)
+    g4.walk(4*direction)
+    g5.walk(direction)
     g.walk(direction)
 
 
