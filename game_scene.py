@@ -9,7 +9,7 @@ clock = pygame.time.Clock()
 
 
 e = Nature()
-#e.play_sound()
+e.play_sound()
 
 g = Goblin(e,x=520,y=410,dir='left')
 g.walk(-50)
