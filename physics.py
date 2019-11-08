@@ -46,7 +46,7 @@ class ObjectProp(object):
     def set_setup(self, prop: dict)->dict:
 
         default = {'x':  0, 'y': 0, 'z': 0, 'angle': 0, 'v': 0, 't': 0, 'mass': 1
-        ,'surface_x': 0, 'surface_y': 0, 'surface_z': 0, 'time_stamp': 0.02, 'command':''}
+        ,'surface_x': 0, 'surface_y': 0, 'surface_z': 0, 'time_stamp': 0.01, 'command':''}
         setup = default.copy()
         setup.update(prop)
         return setup
@@ -58,32 +58,28 @@ class ObjectProp(object):
             self.__rt.start()
 
             # your long-running job goes here...
-            self.update()
+
 
 
         finally:
             print('finis')
-            self.__rt.stop()
+            #self.__rt.stop()
 
     def movement(self, vx: float = 0, vy: float = 0,vz: float = 0):
-
-        self.t = self.time_stamp + self.t+0.5
+        self._stable = False
+        self.t = self.time_stamp + self.t+0.05
         t = self.t
 
         self.z = self.surface_z + vz * t
         self.x = self.surface_x + vx * t
         self.y = self.surface_y + vy * t - 0.5 * self.gravety * math.pow(t, 2)
 
-        if self.surface_x >= self.x or self.surface_y >= self.y:
-            self._stable = True
+        if  self.surface_y >= self.y:
+
             self.__rt.stop()
+            self._stable = True
 
-        else:
-            self._stable = False
-
-
-
-
+        self.update()
 
     def update(self):
         self._command(self)
@@ -97,15 +93,11 @@ ball_scatter = ax.scatter( 0, 0, c='r', marker='o' )
 ball_scatter2 = ax.scatter( 0, 0, c='g', marker='o' )
 
 def update_position(prop):
-    ball_scatter.set_offsets( [prop.x, prop.y] )
-
-    plt.show()
+    print( "ball_1  X:{} , Y:{}".format( prop.x, prop.y ) )
     pass
 
 def update_position2(prop2):
-    ball_scatter2.set_offsets( [prop2.x, prop2.y] )
-
-    plt.show()
+    print("ball_2  X:{} , Y:{}".format(prop2.x, prop2.y))
     pass
 
 
@@ -113,9 +105,12 @@ def main():
 
     ball = ObjectProp()
     ball.command = lambda prop: update_position(prop)
-    ball.throw(100,300)
 
-    plt.show()
+    ball2 = ObjectProp()
+    ball2.command = lambda prop: update_position2(prop)
+    ball.throw(100,100)
+    ball2.throw(1500,100)
+
 
 
 if __name__ == "__main__":

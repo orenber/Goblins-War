@@ -9,7 +9,7 @@ clock = pygame.time.Clock()
 
 
 e = Nature()
-e.play_sound()
+#e.play_sound()
 
 g = Goblin(e,x=520,y=410,dir='left')
 g.walk(-50)
@@ -71,7 +71,7 @@ while run:
         h.bend(1)
     if keys[pygame.K_UP]:
         # y -= vel
-        h.jump(10)
+        h.jump(50,5)
 
 
     if  g5.position_x  <=0:
@@ -81,7 +81,7 @@ while run:
 
     g3.walk(2*direction)
     g2.walk(2*direction)
-    g.jump(direction)
+    g.jump(70)
     g4.walk(4*direction)
     g5.walk(direction)
     g.walk(direction)

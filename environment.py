@@ -55,8 +55,6 @@ class Nature:
         self.__sound_path = os.path.abspath( os.path.join( os.pardir, *sound_path))
 
 
-
-
     @property
     def background(self):
         return self.__background

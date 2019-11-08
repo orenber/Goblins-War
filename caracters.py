@@ -1,5 +1,6 @@
 import pygame
 import os
+from physics import ObjectProp
 
 
 class Human(object):
@@ -29,6 +30,8 @@ class Human(object):
         self.jumpCount = 10
         self.move_direction = 'center'
         self.walk_direction = setup['dir']
+        self.physics_state = ObjectProp()
+        self.physics_state.command = lambda prop: self.update_position( prop )
 
 
         self.bg = environment.background
@@ -98,7 +101,6 @@ class Human(object):
         pygame.draw.rect( self.__environment.win, (0, 255, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 3) )
         pygame.draw.rect( self.__environment.win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50-49*self.health/100, 3) )
 
-
     def draw(self):
 
         self.heal_bar()
@@ -132,8 +134,6 @@ class Human(object):
                 self.__environment.win.blit(self.walkRight[self.__walkCount],
                                             (self.position_x, self.position_y))
 
-
-
     def walk(self, x_steps=1, z_steps=0):
         self.position_x += x_steps
         self.position_z += z_steps
@@ -146,17 +146,19 @@ class Human(object):
     def jump(self, y_high=5, x_steps=0):
 
         if not self.__isJump:
+            self.physics_state.throw(x_steps, y_high)
+            self.__isJump = not self.physics_state._stable
 
-            if self.jumpCount >= -10:
-                neg = 1
-                if self.jumpCount < 0:
-                    neg = -1
-                self.position_y -= (self.jumpCount ** 2)*0.5*neg
-                self.jumpCount -= 1
-            else:
-                self.__isJump = False
-                self.jumpCount = 10
-            self.move_direction = 'up'
+            # if self.jumpCount >= -10:
+            #     neg = 1
+            #     if self.jumpCount < 0:
+            #         neg = -1
+            #     self.position_y -= (self.jumpCount ** 2)*0.5*neg
+            #     self.jumpCount -= 1
+            # else:
+            #     self.__isJump = False
+            #     self.jumpCount = 10
+            # self.move_direction = 'up'
 
         pass
 
@@ -171,22 +173,9 @@ class Human(object):
     def dead(self,cuse):
         pass
 
-
-class Worker(Human):
-
-    def __init__(self):
-        pass
-
-
-class Boss(Worker):
-
-    def __init__(self):
-        pass
-
-
-class Programmer(Worker):
-
-    def __init__(self):
+    def update_position(self, prop):
+        self.position_x = prop.x
+        self.position_y = prop.y
         pass
 
 
