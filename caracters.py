@@ -1,6 +1,7 @@
 import pygame
 import os
 from physics import ObjectProp
+from weapons import Gun, Bullet
 
 
 class Human(object):
@@ -16,23 +17,25 @@ class Human(object):
         self.__isJump = False
         self.__images_path = ''
         self.__walkCount = 0
+        self.__position_y = 0
 
         # public attribute
         self.health = 100
+        self.high = setup['high']
+        self.width = setup['width']
         self.position_x = setup['x']
         self.position_y = setup['y']
         self.position_z = setup['z']
-        self.high = setup['high']
-        self.width = setup['width']
         self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
 
         self.images_path = None
+        self.__isJump = False
         self.jumpCount = 10
         self.move_direction = 'center'
         self.walk_direction = setup['dir']
         self.physics_state = ObjectProp()
         self.physics_state.command = lambda prop: self.update_position( prop )
-
+        self.weapon = Gun()
 
         self.bg = environment.background
 
@@ -42,10 +45,12 @@ class Human(object):
 
     def set_setup(self, prop: dict)->dict:
 
-        default = {'x':  200, 'y': 400, 'high': 180, 'width': 60, 'z': 0, 'dir': 'right'}
+        default = {'x':  200, 'y': 0, 'high': 180, 'width': 60, 'z': 0, 'dir': 'right'}
         setup = default.copy()
         setup.update(prop)
         return setup
+
+
 
     @property
     def images_path(self)->str:
@@ -71,11 +76,22 @@ class Human(object):
 
     @property
     def width(self) -> int:
-        return self.__high
+        return self.__width
 
     @width.setter
     def width(self, width: int):
         self.__width = width * self.__size_factor
+
+    @property
+    def position_y(self) -> int:
+        return self.__position_y
+
+    @position_y.setter
+    def position_y(self, y:int):
+        h = self.high
+        self.__position_y = int(self.__environment.win.get_height() - h - y)
+
+
 
     def load_image(self, file: str=''):
 
@@ -146,9 +162,10 @@ class Human(object):
     def jump(self, y_high=5, x_steps=0):
 
         if not self.__isJump:
-            self.physics_state.throw(x_steps, y_high)
-            self.__isJump = not self.physics_state._stable
 
+            self.physics_state.throw(x_steps, y_high)
+
+            self.__isJump = self.physics_state.rt.is_running
             # if self.jumpCount >= -10:
             #     neg = 1
             #     if self.jumpCount < 0:
@@ -167,7 +184,13 @@ class Human(object):
         self.move_direction = 'down'
         pass
 
-    def attack(self, weapon='hand'):
+    def attack(self):
+        self.weapon.load(2)
+        # get walk direction
+
+        # set weapon target
+
+        self.weapon.activate(self.position_y,self.position_x)
         pass
 
     def dead(self,cuse):

@@ -11,7 +11,7 @@ clock = pygame.time.Clock()
 e = Nature()
 #e.play_sound()
 
-g = Goblin(e,x=520,y=410,dir='left')
+g = Goblin(e,x=520,y=10,dir='left')
 g.walk(-50)
 g2= Goblin(e,x = 450,dir='left')
 g2.walk(-3)
@@ -32,6 +32,7 @@ def redrawWindow():
 
     h.draw()
     h1.draw()
+    h.weapon.draw()
     g.draw()
     g2.draw()
     g3.draw()
@@ -72,6 +73,9 @@ while run:
     if keys[pygame.K_UP]:
         # y -= vel
         h.jump(50,5)
+    if keys[pygame.K_SPACE]:
+
+        h.attack()
 
 
     if  g5.position_x  <=0:
@@ -81,7 +85,7 @@ while run:
 
     g3.walk(2*direction)
     g2.walk(2*direction)
-    g.jump(70)
+    #g.jump(70)
     g4.walk(4*direction)
     g5.walk(direction)
     g.walk(direction)

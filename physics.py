@@ -1,11 +1,6 @@
 from timer_utility import RepeatedTimer
 import math
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-from time import sleep
-from multiprocessing import Process
-
-
 
 
 class ObjectProp(object):
@@ -21,7 +16,7 @@ class ObjectProp(object):
         self.velocity = setup['v']
         self.mass = setup['mass']
         self.time_stamp = setup['time_stamp']
-        self._stable = False
+        self._stable = True
 
         self.gravety = 9.8
         self.surface_x = setup['surface_x']
@@ -53,9 +48,9 @@ class ObjectProp(object):
 
     def throw(self,vx: float = 0, vy: float = 0):
         print( "starting..." )
-        self.__rt = RepeatedTimer(self.time_stamp, self.movement, vx, vy)
+        self.rt = RepeatedTimer( self.time_stamp, self.movement, vx, vy )
         try:
-            self.__rt.start()
+            self.rt.start()
 
             # your long-running job goes here...
 
@@ -63,10 +58,11 @@ class ObjectProp(object):
 
         finally:
             print('finis')
+
             #self.__rt.stop()
 
     def movement(self, vx: float = 0, vy: float = 0,vz: float = 0):
-        self._stable = False
+        self._stable = self.rt.is_running
         self.t = self.time_stamp + self.t+0.05
         t = self.t
 
@@ -76,10 +72,11 @@ class ObjectProp(object):
 
         if  self.surface_y >= self.y:
 
-            self.__rt.stop()
+            self.rt.stop()
             self._stable = True
 
         self.update()
+
 
     def update(self):
         self._command(self)

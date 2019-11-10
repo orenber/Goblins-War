@@ -5,32 +5,37 @@ from time import sleep
 
 class Weapons( object ):
 
-    def __init__(self, owner=None, **attr):
+    def __init__(self, environment = None,owner=None, **attr):
 
         self.owner = owner
         self.velocity = 0
         self.power = 0
+        self.__environment = environment
 
 
 class Gun(Weapons):
 
-    def __init__(self, **attr):
-        super().__init__(None, **attr)
-        self.velocity = 20
+    def __init__(self, environment = None, **attr):
+        super().__init__(environment, **attr)
+
+        self.velocity_x = 20
+        self.velocity_y = -10
         self.power = 8
         self.bullets = []
+        self.target_x = {'pos': 1, 'neg': -1}
+        self.target_y = {'pos': 1, 'neg': -1}
 
 
     def create(self):
         pass
 
-    def draw(self, screen):
+    def draw(self):
 
         # draw gun
 
         # draw bullets
         if len(self.bullets) > 0:
-            self.bullets[-1].draw(screen)
+             self.bullets[-1].draw(self.__environment.win)
 
         pass
 
@@ -40,13 +45,13 @@ class Gun(Weapons):
             self.bullets.append(b)
         pass
 
-    def activate(self):
+    def activate(self, position_y=0, position_x=0):
 
-        if len( self.bullets ) > 0:
-
-            self.physics_object = ObjectProp( surface_y=50, surface_x=50 )
-            self.physics_object.command = lambda prop: self.update_position( prop )
-            self.physics_object.throw(70, 10)
+        if len(self.bullets) > 0:
+            sleep( 0.2 )
+            self.physics_object = ObjectProp(surface_y=position_y, surface_x=position_x)
+            self.physics_object.command = lambda prop: self.update_position(prop)
+            self.physics_object.throw(self.velocity_y, self.velocity_x)
             self.bullets.pop()
 
         else:
@@ -70,11 +75,11 @@ class Bullet():
         self.size = 3
         self.color = (0, 0, 0)
 
+
     def draw(self, screen):
-        object_position_y = int(screen.get_height() - self.y)
+        object_position_y = int(self.y)
         object_position_x = int(self.x)
-        screen.fill((255, 255, 255))
-        pygame.draw.circle(screen, self.color, (object_position_x, object_position_y), self.size)
+        pygame.draw.circle( screen, self.color, (object_position_x, object_position_y), self.size)
 
 
 
@@ -107,7 +112,6 @@ def main():
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_SPACE]:
-            sleep(0.2)
             gun.activate()
         pygame.display.update()
 
