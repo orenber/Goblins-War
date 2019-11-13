@@ -1,14 +1,16 @@
 import pygame
 import os
 from physics import ObjectProp
-from weapons import Gun, Bullet
+from weapons import Gun
+from Utility import is_member ,Direction
 
 
 class Human(object):
 
+
     def __init__(self, environment, **attr):
 
-        setup = self.set_setup(attr)
+
         # private attribute
         self.__width = 0
         self.__high = 0
@@ -20,37 +22,41 @@ class Human(object):
         self.__position_y = 0
 
         # public attribute
+        # public attribute
         self.health = 100
-        self.high = setup['high']
-        self.width = setup['width']
-        self.position_x = setup['x']
-        self.position_y = setup['y']
-        self.position_z = setup['z']
+        self.high = 180
+        self.width = 60
+        self.position_x = 200
+        self.position_y = 0
+        self.position_z = 0
         self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
 
         self.images_path = None
         self.__isJump = False
         self.jumpCount = 10
         self.move_direction = 'center'
-        self.walk_direction = setup['dir']
+        self.walk_direction = 'right'
         self.physics_state = ObjectProp()
         self.physics_state.command = lambda prop: self.update_position( prop )
-        self.weapon = Gun()
+        self.weapon = Gun(environment)
 
         self.bg = environment.background
 
+        self.set_setup(**attr)
         # create human
         self.create()
 
-
-    def set_setup(self, prop: dict)->dict:
+    def set_setup(self, **prop):
 
         default = {'x':  200, 'y': 0, 'high': 180, 'width': 60, 'z': 0, 'dir': 'right'}
-        setup = default.copy()
-        setup.update(prop)
-        return setup
+        fileds = list(prop.keys())
+        state = is_member(fileds, default.keys())
 
-
+        assert state, 'thar is no such member '
+        # setup = default.copy()
+        # setup.update(prop)
+        for name in prop.keys():
+            self.__setattr__(name, prop[name])
 
     @property
     def images_path(self)->str:
@@ -70,7 +76,7 @@ class Human(object):
         return self.__high
 
     @high.setter
-    def high(self, high: int):
+    def high(self, high: int=180):
 
         self.__high = high*self.__size_factor
 
@@ -84,14 +90,19 @@ class Human(object):
 
     @property
     def position_y(self) -> int:
-        return self.__position_y
+        return int(self.__position_y)
 
     @position_y.setter
     def position_y(self, y:int):
-        h = self.high
-        self.__position_y = int(self.__environment.win.get_height() - h - y)
+        if y < 0:
+           y = 0
+        new_position_y = self.high + y
+        self.__position_y = new_position_y
 
 
+    def postion_on_canvas_y(self):
+        new_position_y = self.__environment.win.get_height() - self.position_y
+        return new_position_y
 
     def load_image(self, file: str=''):
 
@@ -113,7 +124,7 @@ class Human(object):
         pass
 
     def heal_bar(self):
-        self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
+        self.hitbox = (self.position_x + 17, self.postion_on_canvas_y() + 2, 31, 57)
         pygame.draw.rect( self.__environment.win, (0, 255, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 3) )
         pygame.draw.rect( self.__environment.win, (255, 0, 0), (self.hitbox[0], self.hitbox[1] - 20, 50-49*self.health/100, 3) )
 
@@ -129,14 +140,14 @@ class Human(object):
 
             self.walk_direction = 'left'
             self.__environment.win.blit( self.walkLeft[self.__walkCount // 3],
-                                             (self.position_x, self.position_y) )
+                                             (self.position_x, self.postion_on_canvas_y()) )
             self.__walkCount -= 1
 
         elif self.move_direction == 'right':
 
             self.walk_direction = 'right'
             self.__environment.win.blit(self.walkRight[self.__walkCount // 3],
-                                   (self.position_x, self.position_y))
+                                   (self.position_x, self.postion_on_canvas_y()))
             self.__walkCount += 1
 
         else:
@@ -144,11 +155,11 @@ class Human(object):
             self.__walkCount = 0
             if self.walk_direction == 'left':
                 self.__environment.win.blit(self.walkLeft[self.__walkCount],
-                                            (self.position_x, self.position_y))
+                                            (self.position_x, self.postion_on_canvas_y()))
 
             elif self.walk_direction == 'right':
                 self.__environment.win.blit(self.walkRight[self.__walkCount],
-                                            (self.position_x, self.position_y))
+                                            (self.position_x, self.postion_on_canvas_y()))
 
     def walk(self, x_steps=1, z_steps=0):
         self.position_x += x_steps
@@ -162,12 +173,10 @@ class Human(object):
     def jump(self, y_high=5, x_steps=0):
 
         if not self.physics_state.rt.is_running:
-            self.physics_state.t = 0
-            self.physics_state.surface_x = self.position_x
-            self.physics_state.x = self.position_x
-            self.physics_state.y = self.position_y
-            self.physics_state.surface_y = 0
-            move_direction = {'right': 1, 'left': -1}
+
+            self.physics_state.set_setup(x=self.position_x, y=self.postion_on_canvas_y(), surface_x= self.position_x)
+            move_direction = {'right': 1, 'left': -1, 'center': 0, 'down': 0}
+
             sign = move_direction[self.move_direction]
             self.physics_state.throw(x_steps*sign, y_high)
 
@@ -185,17 +194,19 @@ class Human(object):
         pass
 
     def bend(self, y_high: int=1):
-        self.position_y += y_high
         self.move_direction = 'down'
         pass
 
     def attack(self):
         self.weapon.load(2)
         # get walk direction
-
-        # set weapon target
-
-        self.weapon.activate(self.position_y,self.position_x)
+        # set weapon target on the move direction
+        move_direction = Direction[self.move_direction]
+        self.weapon.set_target(move_direction)
+        # activate weapon
+        pos_y = self.position_y-self.high/2
+        pos_x = self.position_x+self.width*1.5
+        self.weapon.activate(pos_y, pos_x)
         pass
 
     def dead(self,cuse):

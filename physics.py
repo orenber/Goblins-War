@@ -3,10 +3,10 @@ import math
 import matplotlib.pyplot as plt
 from Utility import is_member
 
+
 class ObjectProp(object):
 
-    def __init__(self,**attr):
-
+    def __init__(self, **attr):
 
         self.x = 0
         self.y = 0
@@ -25,9 +25,9 @@ class ObjectProp(object):
         self.rt = RepeatedTimer(self.time_stamp, self.movement)
 
         # protected
-        self._command = []
+        self.__command = []
 
-        self.set_setup(attr)
+        self.set_setup(**attr)
         pass
 
     @property
@@ -39,26 +39,21 @@ class ObjectProp(object):
         # check if the command is lambda expression
         if callable(command):
 
-            self._command = command
+            self.__command = command
 
-    def set_setup(self, prop: dict)->dict:
+    def set_setup(self, **prop):
 
         default = {'x':  0, 'y': 0, 'z': 0, 'angle': 0, 'v': 0, 't': 0, 'mass': 1
-        ,'surface_x': 0, 'surface_y': 0, 'surface_z': 0, 'time_stamp': 0.01, 'command':''}
-        setup = default.copy()
+        , 'surface_x': 0, 'surface_y': 0, 'surface_z': 0, 'time_stamp': 0.01, 'command':''}
         # check if filed value is inside defulte filed
         fileds = list(prop.keys())
         state = is_member(fileds, default.keys())
+
         assert state, 'thar is no such member '
-        # appaly parameters
-        for n in fileds:
-            self.n
-
-
-
-        setup.update(prop)
-
-        return setup
+        # setup = default.copy()
+        # setup.update(prop)
+        for name in prop.keys():
+            self.__setattr__(name, prop[name])
 
     def throw(self,vx: float = 0, vy: float = 0):
         print( "starting..." )
@@ -84,16 +79,17 @@ class ObjectProp(object):
         self.x = self.surface_x + vx * t
         self.y = self.surface_y + vy * t - 0.5 * self.gravety * math.pow(t, 2)
 
-        if  self.surface_y >= self.y:
+        if  0 >= self.y:
 
             self.rt.stop()
             self._stable = True
+            self.t = 0
 
         self.update()
 
 
     def update(self):
-        self._command(self)
+        self.command(self)
 
         pass
 

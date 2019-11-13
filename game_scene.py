@@ -11,7 +11,7 @@ clock = pygame.time.Clock()
 e = Nature()
 #e.play_sound()
 
-g = Goblin(e,x=520,y=10,dir='left')
+g = Goblin(e,x=520,y=50,dir='left')
 g.walk(-50)
 g2= Goblin(e,x = 450,dir='left')
 g2.walk(-3)
@@ -21,7 +21,7 @@ g4 = Goblin(e,x = 370,dir='left')
 g4.walk(-1)
 g5 = Goblin(e,x = 350,dir='left')
 g5.walk(-1)
-h = Human(e,x=200)
+h = Human(e,x=200, y =60)
 h1 = Human(e,x=300)
 
 
@@ -85,7 +85,7 @@ while run:
 
     g3.walk(2*direction)
     g2.walk(2*direction)
-    g.jump(40,5*direction)
+    #g.jump(40,5*direction)
     g4.walk(4*direction)
     g5.walk(direction)
     g.walk(direction)
