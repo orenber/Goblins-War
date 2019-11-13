@@ -161,11 +161,16 @@ class Human(object):
 
     def jump(self, y_high=5, x_steps=0):
 
-        if not self.__isJump:
+        if not self.physics_state.rt.is_running:
+            self.physics_state.t = 0
+            self.physics_state.surface_x = self.position_x
+            self.physics_state.x = self.position_x
+            self.physics_state.y = self.position_y
+            self.physics_state.surface_y = 0
+            move_direction = {'right': 1, 'left': -1}
+            sign = move_direction[self.move_direction]
+            self.physics_state.throw(x_steps*sign, y_high)
 
-            self.physics_state.throw(x_steps, y_high)
-
-            self.__isJump = self.physics_state.rt.is_running
             # if self.jumpCount >= -10:
             #     neg = 1
             #     if self.jumpCount < 0:

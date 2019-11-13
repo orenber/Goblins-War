@@ -85,7 +85,7 @@ while run:
 
     g3.walk(2*direction)
     g2.walk(2*direction)
-    #g.jump(70)
+    g.jump(40,5*direction)
     g4.walk(4*direction)
     g5.walk(direction)
     g.walk(direction)
