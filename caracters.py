@@ -7,7 +7,6 @@ from Utility import is_member ,Direction
 
 class Human(object):
 
-
     def __init__(self, environment, **attr):
 
 
@@ -20,10 +19,12 @@ class Human(object):
         self.__images_path = ''
         self.__walkCount = 0
         self.__position_y = 0
+        self.__health = 100
 
         # public attribute
         # public attribute
-        self.health = 100
+
+        self.power =  0
         self.high = 180
         self.width = 60
         self.position_x = 200
@@ -99,6 +100,23 @@ class Human(object):
         new_position_y = self.high + y
         self.__position_y = new_position_y
 
+    @property
+    def health(self)->int:
+        return   self.__health
+
+    @health.setter
+    def health(self,point):
+
+        self.__health +=point
+        if self.__health<=0:
+            self.__health = 0
+            self.dead()
+        elif self.__health> 100:
+            self.__health = 100
+
+
+
+
 
     def postion_on_canvas_y(self):
         new_position_y = self.__environment.win.get_height() - self.position_y
@@ -120,8 +138,10 @@ class Human(object):
                    self.load_image('L4.png'), self.load_image('L5.png'), self.load_image('L6.png'),
                    self.load_image('L7.png'), self.load_image('L8.png'), self.load_image('L9.png')]
 
-        self.char = self.load_image('standing.png')
+        self.standing = self.load_image('standing.png')
+
         pass
+
 
     def heal_bar(self):
         self.hitbox = (self.position_x + 17, self.postion_on_canvas_y() + 2, 31, 57)
@@ -160,6 +180,10 @@ class Human(object):
             elif self.walk_direction == 'right':
                 self.__environment.win.blit(self.walkRight[self.__walkCount],
                                             (self.position_x, self.postion_on_canvas_y()))
+            elif self.move_direction == 'down':
+
+                self.__environment.win.blit( self.standing[self.__walkCount],
+                                             (self.position_x, self.postion_on_canvas_y()) )
 
     def walk(self, x_steps=1, z_steps=0):
         self.position_x += x_steps
@@ -170,7 +194,7 @@ class Human(object):
             self.move_direction = 'left'
         pass
 
-    def jump(self, y_high=5, x_steps=0):
+    def jump(self, y_high=5, x_steps=0,surface = 0):
 
         if not self.physics_state.rt.is_running:
 
@@ -180,20 +204,11 @@ class Human(object):
             sign = move_direction[self.move_direction]
             self.physics_state.throw(x_steps*sign, y_high)
 
-            # if self.jumpCount >= -10:
-            #     neg = 1
-            #     if self.jumpCount < 0:
-            #         neg = -1
-            #     self.position_y -= (self.jumpCount ** 2)*0.5*neg
-            #     self.jumpCount -= 1
-            # else:
-            #     self.__isJump = False
-            #     self.jumpCount = 10
-            # self.move_direction = 'up'
+
 
         pass
 
-    def bend(self, y_high: int=1):
+    def stop(self, y_high: int=1):
         self.move_direction = 'down'
         pass
 
@@ -209,7 +224,11 @@ class Human(object):
         self.weapon.activate(pos_y, pos_x)
         pass
 
-    def dead(self,cuse):
+    def dead(self):
+
+        self.move_direction = 'center'
+        self.walk_direction == 'center'
+
         pass
 
     def update_position(self, prop):
@@ -225,6 +244,7 @@ class Goblin(Human):
 
 
         # create goblin
+        self.power = 3
         self.move_direction = 'center'
         self.walk_direction == 'left'
         self.create()
@@ -239,5 +259,5 @@ class Goblin(Human):
         self.walkLeft = [self.load_image( 'L1E.png' ), self.load_image('L2E.png' ), self.load_image('L3E.png'),
                    self.load_image('L4E.png'), self.load_image('L5E.png' ), self.load_image('L6E.png'),
                    self.load_image('L7E.png'), self.load_image('L8E.png' ), self.load_image('L9E.png')]
-
+        self.char = self.load_image( 'standing.png' )
         pass

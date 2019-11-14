@@ -18,12 +18,13 @@ class Gun(Weapons):
     def __init__(self, environment = None, **attr):
         super().__init__(environment, **attr)
 
-        self.__velocity_x = 50
-        self.__velocity_y = 10
+        self.__velocity_x = 20
+        self.__velocity_y = 20
         self.__target_x = Direction['left']
         self.__target_y = Direction['up']
         self.power = 8
         self.bullets = []
+        self.bullets_moving = []
         self.physics_objects = []
 
     @property
@@ -72,10 +73,10 @@ class Gun(Weapons):
         # draw gun
 
         # draw bullets
-        if len(self.bullets) > 0:
-             self.bullets[-1].draw(self._environment.win)
-
-
+        bullets_num = len( self.bullets_moving )
+        if bullets_num > 0:
+            for n in range(bullets_num):
+                self.bullets_moving[n].draw(self._environment.win)
         pass
 
     def load(self, bullets: int = 1):
@@ -84,6 +85,14 @@ class Gun(Weapons):
             self.bullets.append(b)
         pass
 
+    def bullet_drop(self):
+
+        self.bullets_moving.append(self.bullets[-1])
+        self.bullets.pop()
+
+
+
+
     def activate(self, position_y=0, position_x=0):
 
         if len(self.bullets) > 0:
@@ -91,7 +100,7 @@ class Gun(Weapons):
             self.physics_objects.append(ObjectProp(surface_y=position_y, surface_x=position_x,
                                         command=lambda prop: self.update_position(prop)))
             self.physics_objects[-1].throw(self.velocity_y, self.velocity_x)
-            self.bullets.pop()
+            self.bullet_drop()
             if len(self.physics_objects) > 0:
                 self.physics_objects.pop(0)
 
@@ -99,9 +108,12 @@ class Gun(Weapons):
               print('gun out of ammo')
 
     def update_position(self, prop):
-        if len(self.bullets) > 0:
-            self.bullets[-1].position_x = prop.x
-            self.bullets[-1].position_y = prop.y
+        bullets_num = len(self.bullets_moving )
+        if bullets_num > 0:
+
+            self.bullets_moving[0].position_x = prop.x
+            self.bullets_moving[0].position_y = prop.y
+
         pass
 
 
@@ -111,6 +123,7 @@ class Bullet():
 
         self.__position_x = 0
         self.__position_y = 0
+
 
         self.size = 3
         self.color = (0, 0, 0)

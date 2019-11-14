@@ -11,8 +11,13 @@ class Nature:
 
         self.background = ''
         self.sound = False
-        self.width = 700
+        self.width = 500
         self.high = 500
+
+        self.bg_position_x1 = 0
+        self.bg_position_y1 = 0
+        self.bg_position_x2 = 0
+        self.bg_position_y2 = 0
 
         self.images_path = ['LikeBoss', 'Resources', 'images']
         self.sound_path = ['LikeBoss', 'Resources', 'sound']
@@ -20,19 +25,36 @@ class Nature:
         self.__music_file = 'music.mp3'
         self.create()
 
+
+
         pass
 
     def create(self):
         # show display figure
         self.background = self.load_image(self.__background_file)
+        self.bg_position_x2 = self.background.get_width()
         self.win = pygame.display.set_mode((self.width, self.high))
         self.draw()
         pass
 
     def draw(self):
         self.win.fill((0, 0, 0))
-        self.win.blit(self.background, (0, 0))
-        #pygame.display.update()
+        self.win.blit(self.background, (self.bg_position_x1, self.bg_position_y1))
+        self.win.blit(self.background, (self.bg_position_x2, self.bg_position_y2) )
+
+    def move_background(self,speed:float = 1.4):
+
+        self.bg_position_x1 -= speed
+        self.bg_position_x2 -= speed
+
+        if self.bg_position_x1<self.background.get_width()*-1:
+            self.bg_position_x1 = self.background.get_width()
+        if self.bg_position_x2 < self.background.get_width()* -1:
+            self.bg_position_x2 = self.background.get_width()
+        pass
+
+
+
 
 
     @property
