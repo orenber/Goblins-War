@@ -1,4 +1,4 @@
-from timer_utility import RepeatedTimer
+from Utility.timer_utility import RepeatedTimer
 import math
 import matplotlib.pyplot as plt
 from Utility import is_member
