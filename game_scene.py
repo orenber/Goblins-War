@@ -25,7 +25,7 @@ g5.walk(-1)
 h = Human(e,x=200, y =60)
 
 
-def check_collide(hero:list ,enemy:list):
+def check_collide(hero: list, enemy: list):
 
     # get array of enemy position
 
@@ -50,10 +50,12 @@ def check_collide(hero:list ,enemy:list):
     collide_state = {'state': collide, 'enemy_collide': enemy_collide}
     return collide_state
 
-def live_bar(screen,health):
-    hitbox = (100, 36,100, 100)
-    pygame.draw.rect( screen, (0, 255, 0), (hitbox[0], hitbox[1] - 20, 80, 20) )
-    pygame.draw.rect( screen, (255, 0, 0), (hitbox[0], hitbox[1] - 20, 80 - 79 * health / 100, 20) )
+
+def live_bar(screen, health):
+    hit_box = (100, 36,100, 100)
+    pygame.draw.rect(screen, (0, 255, 0), (hit_box[0], hit_box[1] - 20, 80, 20))
+    pygame.draw.rect(screen, (255, 0, 0), (hit_box[0], hit_box[1] - 20, 80 - 79 * health / 100, 20))
+
 
 def enemy_action(enemy: Goblin, hero):
 
@@ -68,9 +70,28 @@ def enemy_action(enemy: Goblin, hero):
         hero.health = -enemy.power
 
     pass
+
 def enemy_wounded(enemy: Goblin, wepon):
 
     enemy.health -= wepon.power
+
+
+def control_character(character):
+
+    keys = pygame.key.get_pressed()
+    if character.live:
+        if keys[pygame.K_LEFT]:
+            character.walk(-5)
+        if keys[pygame.K_RIGHT]:
+            character.walk(5)
+        if keys[pygame.K_DOWN]:
+            character.stop()
+        if keys[pygame.K_UP]:
+            character.jump(50, 5)
+        if keys[pygame.K_SPACE]:
+            character.attack()
+
+
 def redrawWindow():
 
     e.draw()
@@ -122,25 +143,9 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
+    control_character(h)
 
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_LEFT]:
-        h.walk(-5)
-    if keys[pygame.K_RIGHT]:
-        h.walk(5)
-    if keys[pygame.K_DOWN]:
-        #y += vel
-        h.stop()
-    if keys[pygame.K_UP]:
-        # y -= vel
-        h.jump(50,5)
-    if keys[pygame.K_SPACE]:
-
-        h.attack()
-
-
-    if  g5.position_x  <=0:
+    if g5.position_x <=0:
         direction = 1
     elif g3.position_x>=600:
         direction = -1
@@ -155,15 +160,22 @@ while run:
         #enemy_collide_wepon = check_collide(h.weapon.bullets_moving[0], [g, g2, g3, g4, g5] )
         #if enemy_collide_wepon['state']:
             #enemy_wounded(collide['enemy_collide'][0], h.weapon)
+    if h.live:
+        g3.walk(2*direction)
+        g2.walk(2*direction)
+        g4.walk(4*direction)
+        g5.walk(direction)
+        g.walk(direction)
+    if not h.live:
+        # all the gobllins are celabrate
+        g.jump(20)
+        g3.jump(30)
+        g2.jump(40)
+        g4.jump(50)
+        g5.jump(10)
 
 
 
-
-    g3.walk(2*direction)
-    g2.walk(2*direction)
-    g4.walk(4*direction)
-    g5.walk(direction)
-    g.walk(direction)
 
 
     redrawWindow()

@@ -17,6 +17,7 @@ class ObjectProp(object):
         self.mass = 1
         self.time_stamp = 0.01
         self._stable = True
+        self.bottom = 0
 
         self.gravety = 9.8
         self.surface_x = 0
@@ -43,7 +44,7 @@ class ObjectProp(object):
 
     def set_setup(self, **prop):
 
-        default = {'x':  0, 'y': 0, 'z': 0, 'angle': 0, 'v': 0, 't': 0, 'mass': 1
+        default = {'x':  0, 'y': 0, 'z': 0, 'angle': 0, 'v': 0, 't': 0, 'mass': 1, 'bottom': 0
         , 'surface_x': 0, 'surface_y': 0, 'surface_z': 0, 'time_stamp': 0.01, 'command':''}
         # check if filed value is inside defulte filed
         fileds = list(prop.keys())
@@ -79,7 +80,7 @@ class ObjectProp(object):
         self.x = self.surface_x + vx * t
         self.y = self.surface_y + vy * t - 0.5 * self.gravety * math.pow(t, 2)
 
-        if  0 >= self.y:
+        if  self.bottom >= self.y:
 
             self.rt.stop()
             self._stable = True

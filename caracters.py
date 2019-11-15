@@ -20,11 +20,12 @@ class Human(object):
         self.__walkCount = 0
         self.__position_y = 0
         self.__health = 100
+        self.__live = True
 
         # public attribute
         # public attribute
 
-        self.power =  0
+        self.power = 0
         self.high = 180
         self.width = 60
         self.position_x = 200
@@ -58,6 +59,14 @@ class Human(object):
         # setup.update(prop)
         for name in prop.keys():
             self.__setattr__(name, prop[name])
+
+    @property
+    def live(self)->bool:
+        if self.health > 0:
+            self.__live = True
+        else:
+            self.__live = False
+        return self.__live
 
     @property
     def images_path(self)->str:
@@ -94,9 +103,9 @@ class Human(object):
         return int(self.__position_y)
 
     @position_y.setter
-    def position_y(self, y:int):
-        if y < 0:
-           y = 0
+    def position_y(self, y: int):
+        if y < 0 & self.health > 0:
+            y = 0
         new_position_y = self.high + y
         self.__position_y = new_position_y
 
@@ -108,9 +117,9 @@ class Human(object):
     def health(self,point):
 
         self.__health +=point
-        if self.__health<=0:
+        if self.__health <= 0:
             self.__health = 0
-            self.dead()
+            self.__dead()
         elif self.__health> 100:
             self.__health = 100
 
@@ -138,7 +147,7 @@ class Human(object):
                    self.load_image('L4.png'), self.load_image('L5.png'), self.load_image('L6.png'),
                    self.load_image('L7.png'), self.load_image('L8.png'), self.load_image('L9.png')]
 
-        self.standing = self.load_image('standing.png')
+        self.standing = [self.load_image('standing.png')]
 
         pass
 
@@ -169,6 +178,11 @@ class Human(object):
             self.__environment.win.blit(self.walkRight[self.__walkCount // 3],
                                    (self.position_x, self.postion_on_canvas_y()))
             self.__walkCount += 1
+        elif self.move_direction == 'down':
+
+            self.__environment.win.blit(self.standing[0],
+                                    (self.position_x, self.postion_on_canvas_y()) )
+
 
         else:
 
@@ -180,10 +194,7 @@ class Human(object):
             elif self.walk_direction == 'right':
                 self.__environment.win.blit(self.walkRight[self.__walkCount],
                                             (self.position_x, self.postion_on_canvas_y()))
-            elif self.move_direction == 'down':
 
-                self.__environment.win.blit( self.standing[self.__walkCount],
-                                             (self.position_x, self.postion_on_canvas_y()) )
 
     def walk(self, x_steps=1, z_steps=0):
         self.position_x += x_steps
@@ -224,16 +235,19 @@ class Human(object):
         self.weapon.activate(pos_y, pos_x)
         pass
 
-    def dead(self):
-
-        self.move_direction = 'center'
-        self.walk_direction == 'center'
-
-        pass
-
     def update_position(self, prop):
         self.position_x = prop.x
         self.position_y = prop.y
+        pass
+
+    def __dead(self):
+
+        self.move_direction = 'down'
+        # prepare the grave deep
+        self.physics_state.set_setup(bottom=-1500)
+        # jump to the grave
+        self.jump(60)
+
         pass
 
 
