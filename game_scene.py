@@ -1,6 +1,6 @@
 import pygame
-from caracters import Human,Goblin
-from environment import Nature
+from Play.caracters import Human,Goblin
+from Play.environment import Nature
 import numpy as np
 import random
 
@@ -12,42 +12,64 @@ clock = pygame.time.Clock()
 e = Nature()
 #e.play_sound()
 
-g = Goblin(e,x=520,y=50,dir='left')
-g.walk(-50)
-g2 = Goblin(e,x = 450,dir='left')
-g2.walk(-3)
-g3 = Goblin(e,x = 390,dir='left')
-g3.walk(-1)
-g4 = Goblin(e,x = 370,dir='left')
-g4.walk(-1)
-g5 = Goblin(e,x = 350,dir='left')
-g5.walk(-1)
-h = Human(e,x=200, y =60)
 
+g = []
+number_of_enemy = 10
+for n in range(number_of_enemy):
+    random_position = random.randint(400,800 )
+    enemy = Goblin( e, position_x=random_position, walk_direction='left' )
+    enemy.create()
+    random_speed = random.randint(-5,-1 )
+    enemy.walk( random_speed )
+    g.append(enemy)
+
+
+h = Human(e,position_x=200, position_y = 0)
+h.create()
 
 def check_collide(hero: list, enemy: list):
+
+
 
     # get array of enemy position
 
     # calculate the distance of the enemy from the hero in x axis
-    x_distance = np.array([abs(n.position_x - hero.position_x) for n in enemy])
+    x_distance = np.array([abs(n.position_x - hero.position_x+hero.width) for n in enemy])
     # calculate the distance of the enemy from the hero in y axis
     y_distance = np.array([abs(n.position_y - hero.position_y) for n in enemy])
+    # jump collide
+    distance_jump_collide = np.array([abs(n.position_y + n.high - hero.position_y) for n in enemy])
+
+
     # if the r is collide show text on screen " collide "
     index_enemy_collide = (y_distance < 5) & (x_distance < 5)
+    index_jump_collide  = (distance_jump_collide <5)& (x_distance < 10)
+    jump_collide = True in index_jump_collide
+    Enemy_collide = True in index_enemy_collide
+    enemy_collide = []
 
-    collide = True in index_enemy_collide
-
-    if collide:
+    if Enemy_collide:
+        collide = Enemy_collide
         index = np.where(index_enemy_collide == True)
         enemy_num = str(index[0]+1)
         print("collide goblins number: " + enemy_num)
         enemy_collide = list(np.array(enemy)[index[0]])
+        injure = 'Hero'
+    elif jump_collide:
+        collide = jump_collide
+        index = np.where( index_jump_collide == True )
+        enemy_num = str( index[0] + 1 )
+        print( "jump_collide  goblins number: " + enemy_num )
+        enemy_collide = list( np.array( enemy )[index[0]] )
+        injure = 'Enemy'
     else:
-        enemy_collide = []
+        collide = False
+        injure = None
+
+
 
     pass
-    collide_state = {'state': collide, 'enemy_collide': enemy_collide}
+    collide_state = {'state': collide, 'injure': injure ,'enemy_collide': enemy_collide}
     return collide_state
 
 
@@ -57,23 +79,22 @@ def live_bar(screen, health):
     pygame.draw.rect(screen, (255, 0, 0), (hit_box[0], hit_box[1] - 20, 80 - 79 * health / 100, 20))
 
 
-def enemy_action(enemy: Goblin, hero):
+def enemy_action(enemy: Goblin, hero, injure):
 
-    # chuse randomaly the enemy action
-    # generate random number between 1- 4
-    random_number = random.randint(1, 4)
-    # escape - change direction
-    if random_number == 1:
-        enemy.jump(40,5*direction)
-    elif random_number == 2:
-        enemy.attack()
-        hero.health = -enemy.power
-
-    pass
-
-def enemy_wounded(enemy: Goblin, wepon):
-
-    enemy.health -= wepon.power
+    if injure == 'Hero':
+        # cause randomly the enemy action
+        # generate random number between 1- 4
+        random_number = random.randint(1, 4)
+        # escape - change direction
+        if random_number == 1:
+            enemy.jump(40,5*direction)
+        elif random_number == 2:
+            enemy.attack()
+            hero.health = -enemy.power
+        pass
+    elif injure == 'Enemy':
+        enemy.health = -hero.power
+        enemy.jump( 40, 5 * direction )
 
 
 def control_character(character):
@@ -98,6 +119,7 @@ def redrawWindow():
     e.move_background()
     live_bar( e.win, h.health )
 
+
     text_score = font.render('Score: ' + str(score), 1, (0,0,0))
     health_score = font.render('Health:        ' + str(h.health), 1, (0,0,0))
 
@@ -111,29 +133,19 @@ def redrawWindow():
     e.win.blit(health_score, (20, 10) )
 
     h.draw()
-    h.weapon.draw()
+    [r.draw() for r in g]
 
-    g.draw()
-    g.weapon.draw()
-    g2.draw()
-    g2.weapon.draw()
-    g3.draw()
-    g3.weapon.draw()
-    g4.draw()
-    g4.weapon.draw()
-    g5.draw()
-    g5.weapon.draw()
 
     pygame.display.update()
 
-
+sp = 0
 score = 0
 speed = 100
 direction =-1
 # create font object
-font = pygame.font.SysFont( "comicsansms", 22 )
-font_game_over = pygame.font.SysFont( "comicsansms",40 )
-
+font = pygame.font.SysFont("comicsansms", 22 )
+font_game_over = pygame.font.SysFont("comicsansms",40 )
+random_speed = [random.randint( 1, 4 ) for i in range(number_of_enemy)]
 run = True
 while run:
 
@@ -145,36 +157,26 @@ while run:
 
     control_character(h)
 
-    if g5.position_x <=0:
+    if g[-1].position_x <=0:
         direction = 1
-    elif g3.position_x>=600:
+    elif g[0].position_x>=600:
         direction = -1
 
-    collide = check_collide(h, [g, g2, g3, g4, g5])
+    collide = check_collide(h, g)
 
     if collide['state']:
-        enemy_action(collide['enemy_collide'][0],h)
-    bullets_moving = len( h.weapon.bullets_moving )
-    print('bullets_moving: '+ str(bullets_moving))
-    #if bullets_moving>0:
-        #enemy_collide_wepon = check_collide(h.weapon.bullets_moving[0], [g, g2, g3, g4, g5] )
-        #if enemy_collide_wepon['state']:
-            #enemy_wounded(collide['enemy_collide'][0], h.weapon)
+        enemy_action(collide['enemy_collide'][0],h,collide['injure'])
+        if collide['injure'] == 'Enemy':
+            score += 20
+    # bullets_moving = len( h.weapon.bullets_moving )
+    # print('bullets_moving: '+ str(bullets_moving))
+
     if h.live:
-        g3.walk(2*direction)
-        g2.walk(2*direction)
-        g4.walk(4*direction)
-        g5.walk(direction)
-        g.walk(direction)
+
+        [e.walk(random_speed[i]*direction) for i, e in enumerate(g,0)]
     if not h.live:
-        # all the gobllins are celabrate
-        g.jump(20)
-        g3.jump(30)
-        g2.jump(40)
-        g4.jump(50)
-        g5.jump(10)
-
-
+        # all the goblins are celabrate
+        [r.jump(30) for r in g ]
 
 
 

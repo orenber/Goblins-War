@@ -1,0 +1,12 @@
+{
+  "test_nature.py::TestNature::test_draw": true,
+  "test_nature.py::TestNature::test_sound_path": true,
+  "test_objectProp.py::TestObjectProp::test_movement": true,
+  "test_objectProp.py::TestObjectProp::test_update": true,
+  "test_repeatedTimer.py": true,
+  "test_repeatedTimer.py::TestRepeatedTimer::test__run": true,
+  "test_repeatedTimer.py::TestRepeatedTimer::test_set": true,
+  "test_repeatedTimer.py::TestRepeatedTimer::test_start_input_kwargs": true,
+  "test_repeatedTimer.py::TestRepeatedTimer::test_stop_input_args": true,
+  "test_repeatedTimer.py::TestRepeatedTimer::test_stop_input_kwargs": true
+}

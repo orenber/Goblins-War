@@ -3,7 +3,9 @@ import enum
 
 def is_member(small: list, big: list)->bool:
     items = set(big)
-    return set(small).issubset(items)
+    difference = list(set(small)-set(big))
+    member = set(small).issubset(items)
+    return member, difference
 
 
 class Direction(enum.Enum):

@@ -1,11 +1,11 @@
 import pygame
-from physics import ObjectProp
+from Play.physics import ObjectProp
 from Utility import Direction
 
 
 class Weapons( object ):
 
-    def __init__(self, environment = None,owner=None, **attr):
+    def __init__(self, environment = None, owner=None, **attr):
 
         self.owner = owner
         self.velocity = 0
@@ -89,9 +89,6 @@ class Gun(Weapons):
 
         self.bullets_moving.append(self.bullets[-1])
         self.bullets.pop()
-
-
-
 
     def activate(self, position_y=0, position_x=0):
 

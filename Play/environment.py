@@ -4,7 +4,7 @@ import os
 
 class Nature:
 
-    def __init__(self):
+    def __init__(self) -> object:
 
         self.__images_path = ''
         self.__background = ''
@@ -19,19 +19,16 @@ class Nature:
         self.bg_position_x2 = 0
         self.bg_position_y2 = 0
 
-        self.images_path = ['LikeBoss', 'Resources', 'images']
-        self.sound_path = ['LikeBoss', 'Resources', 'sound']
-        self.__background_file = 'bg.jpg'
-        self.__music_file = 'music.mp3'
-        self.create()
-
-
-
+        self.images_path = ['Resources', 'images', 'Canvas']
+        self.sound_path = ['Resources', 'sound']
+        self.background_file = 'bg.jpg'
+        self.music_file = 'music.mp3'
+        self.__create()
         pass
 
-    def create(self):
+    def __create(self):
         # show display figure
-        self.background = self.load_image(self.__background_file)
+        self.background = self.load_image(self.background_file)
         self.bg_position_x2 = self.background.get_width()
         self.win = pygame.display.set_mode((self.width, self.high))
         self.draw()
@@ -54,9 +51,6 @@ class Nature:
         pass
 
 
-
-
-
     @property
     def images_path(self)->str:
         return self.__images_path
@@ -64,7 +58,7 @@ class Nature:
     @images_path.setter
     def images_path(self, images_path: tuple):
 
-        self.__images_path =  os.path.abspath(os.path.join(os.pardir, *images_path))
+        self.__images_path = os.path.abspath(os.path.join(*images_path))
     pass
 
     @property
@@ -74,7 +68,7 @@ class Nature:
     @sound_path.setter
     def sound_path(self, sound_path: tuple):
 
-        self.__sound_path = os.path.abspath( os.path.join( os.pardir, *sound_path))
+        self.__sound_path = os.path.abspath(os.path.join(*sound_path))
 
 
     @property
@@ -95,7 +89,7 @@ class Nature:
     def play_sound(self, file: str=None):
 
         if file is None:
-            file = self.__music_file
+            file = self.music_file
         path = os.path.join(self.sound_path, file)
         pygame.mixer.init()
         pygame.mixer.music.load(path)
