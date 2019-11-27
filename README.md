@@ -7,8 +7,8 @@ Only you, the hero, can save the world from the goblins' takeover,
 Fight the goblins frantically, the fate of humanity is on your hand!
 
 * jump on the goblin to destroy them
-* arrow key left: walk lwft 
-* arrow key right :walk rught
+* arrow key left: walk left 
+* arrow key right :walk right
 * arrow key up: jump
 * arrow down stand on the place 
 
