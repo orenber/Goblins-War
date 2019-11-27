@@ -12,7 +12,7 @@ Fight the goblins frantically, the fate of humanity is on your hand!
 * arrow key up: jump
 * arrow down stand on the place 
 
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/IcgoscmLW4A/mq1.jpg)](https://https://youtu.be/IcgoscmLW4A)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/IcgoscmLW4A/mq1.jpg)](https://youtu.be/IcgoscmLW4A)
 
 
 Special credit to : Tech With Tim 
