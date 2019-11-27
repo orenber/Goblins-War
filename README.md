@@ -14,7 +14,7 @@ arrow key up: jump
 arrow down stand on the place 
 
 
-spesial credit to : Tech With Tim 
+Special credit to : Tech With Tim 
 
 
 
