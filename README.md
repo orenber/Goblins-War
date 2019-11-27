@@ -13,6 +13,8 @@ arrow key right :walk rught
 arrow key up: jump
 arrow down stand on the place 
 
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/IcgoscmLW4A/mq1.jpg)](https://https://youtu.be/IcgoscmLW4A)
+
 
 Special credit to : Tech With Tim 
 
