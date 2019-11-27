@@ -10,7 +10,7 @@ Fight the goblins frantically, the fate of humanity is on your hand!
 * arrow key left: walk left 
 * arrow key right :walk right
 * arrow key up: jump
-* arrow down stand on the place 
+* arrow down stand in place 
 
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/IcgoscmLW4A/mq1.jpg)](https://youtu.be/IcgoscmLW4A)
 
