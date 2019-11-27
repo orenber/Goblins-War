@@ -58,20 +58,21 @@ class ObjectProp(object):
     def set_setup(self, **prop):
 
         default = ['x', 'y', 'z', 'angle', 'v', 't', 'mass', 'bottom', 'gravity',
-                   'surface_x', 'surface_y', 'surface_z', 'time_stamp', 'command']
+                   'surface_x', 'surface_y', 'surface_z', 'time_stamp',
+                   'command_update', 'command_stop']
         # check if filed value is inside defulte filed
         fileds = list(prop.keys())
         (state, diff) = is_member(fileds, default)
-        print(diff)
 
-        assert state, 'their is no such member '
+
+        assert state, 'their is no such member' + str(diff)
         # setup = default.copy()
         # setup.update(prop)
         for name in prop.keys():
             self.__setattr__(name, prop[name])
 
     def throw(self,vx: float = 0, vy: float = 0):
-        print("starting...")
+
         self.rt.start_input_args = vx, vy
         self.rt.stop_function = self._stop_movment
 
@@ -81,9 +82,8 @@ class ObjectProp(object):
             # your long-running job goes here...
 
         finally:
-            print('finis')
+            pass
 
-            #self.rt.stop()
 
     def _movement(self, vx: float = 0, vy: float = 0,vz: float = 0):
         self._stable = self.rt.is_running

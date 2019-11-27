@@ -2,7 +2,8 @@ import pygame
 import os
 from Play.physics import ObjectProp
 from Play.weapons import Gun
-from Utility import is_member ,Direction
+from Utility import is_member ,Direction,full_file
+from Utility.timer_utility import RepeatedTimer
 
 
 class Human(object):
@@ -10,16 +11,14 @@ class Human(object):
 
     def __init__(self, environment, **attr):
 
-
         # private attribute
+        self._environment = environment
+        self._frame_count = 0
+
         self.__width = 0
         self.__high = 0
         self.__size_factor = 1 / 3
-        self.__environment = environment
         self.__isJump = False
-        self.__images_path = ''
-        self.__sound_hit = ''
-        self.__walkCount = 0
         self.__position_y = 0
         self.__health = 100
         self.__live = True
@@ -29,15 +28,16 @@ class Human(object):
         # public attribute
 
         self.power = 20
-        self.high = 160
+        self.high = 180
         self.width = 60
         self.position_x = 200
         self.position_y = 0
         self.position_z = 0
         self.hitbox = (self.position_x + 17, self.position_y + 2, 31, 57)
 
-        self.images_path = ['Resources', 'images', 'Hero']
-        self.sound_hit = ['Resources', 'sound', 'hit.mp3']
+        self.images_path = full_file(['Resources', 'images', 'Hero'])
+        self.sound_hit = full_file(['Resources', 'sound', 'hit.mp3'])
+
 
         self.jumpCount = 10
         self.move_direction = 'center'
@@ -48,15 +48,13 @@ class Human(object):
 
         self.set_setup(**attr)
 
-
-
     def set_setup(self, **prop):
 
         default = ['position_x', 'position_y', 'high', 'width', 'walk_direction']
         fileds = list(prop.keys())
-        state = is_member(fileds, default)
+        (state, missing) = is_member(fileds, default)
 
-        assert state, 'thar is no such member '
+        assert state, 'thar is no such member :' + str(missing)
         # setup = default.copy()
         # setup.update(prop)
         for name in prop.keys():
@@ -68,26 +66,8 @@ class Human(object):
             self.__live = True
         else:
             self.__live = False
+
         return self.__live
-
-    @property
-    def images_path(self)->str:
-        return self.__images_path
-
-    @images_path.setter
-    def images_path(self, images_path: tuple=None):
-
-        self.__images_path = os.path.abspath(os.path.join(*images_path))
-
-    @property
-    def sound_hit(self)->str:
-        return self.__sound_hit
-
-    @sound_hit.setter
-    def sound_hit(self, sound_hit: tuple=None):
-
-        self.__sound_hit = os.path.abspath(os.path.join(*sound_hit))
-
 
     @property
     def high(self)->int:
@@ -119,20 +99,20 @@ class Human(object):
 
     @property
     def health(self)->int:
-        return   self.__health
+        return self.__health
 
     @health.setter
-    def health(self,point):
+    def health(self, point):
 
-        self.__health +=point
+        self.__health += point
         if self.__health <= 0:
             self.__health = 0
             self.__dead()
-        elif self.__health> 100:
+        elif self.__health > 100:
             self.__health = 100
 
     def position_on_canvas_y(self):
-        new_position_y = self.__environment.win.get_height() - self.position_y
+        new_position_y = self._environment.win.get_height() - self.position_y
         return new_position_y
 
     def load_image(self, file: str=''):
@@ -157,44 +137,44 @@ class Human(object):
 
     def heal_bar(self):
         self.hitbox = (self.position_x + 17, self.position_on_canvas_y() + 2, 31, 57)
-        pygame.draw.rect(self.__environment.win, (0, 255, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 3))
-        pygame.draw.rect(self.__environment.win, (255, 0, 0),
+        pygame.draw.rect(self._environment.win, (0, 255, 0), (self.hitbox[0], self.hitbox[1] - 20, 50, 3))
+        pygame.draw.rect(self._environment.win, (255, 0, 0),
                          (self.hitbox[0], self.hitbox[1] - 20, 50-49*self.health/100, 3))
 
     def draw(self):
 
         self.heal_bar()
 
-        if abs(self.__walkCount) >= 27:
-            self.__walkCount = 0
+        if abs(self._frame_count) >= 27:
+            self._frame_count = 0
 
         if self.move_direction == 'left':
 
             self.walk_direction = 'left'
-            self.__environment.win.blit( self.walkLeft[self.__walkCount // 3],
+            self._environment.win.blit( self.walkLeft[self._frame_count // 3],
                                              (self.position_x, self.position_on_canvas_y()) )
-            self.__walkCount -= 1
+            self._frame_count -= 1
 
         elif self.move_direction == 'right':
 
             self.walk_direction = 'right'
-            self.__environment.win.blit(self.walkRight[self.__walkCount // 3],
+            self._environment.win.blit(self.walkRight[self._frame_count // 3],
                                    (self.position_x, self.position_on_canvas_y()))
-            self.__walkCount += 1
+            self._frame_count += 1
         elif self.move_direction == 'down':
 
-            self.__environment.win.blit(self.standing[0],
+            self._environment.win.blit(self.standing[0],
                                     (self.position_x, self.position_on_canvas_y()))
 
         else:
 
-            self.__walkCount = 0
+            self._frame_count = 0
             if self.walk_direction == 'left':
-                self.__environment.win.blit(self.walkLeft[self.__walkCount],
+                self._environment.win.blit(self.walkLeft[ self._frame_count],
                                             (self.position_x, self.position_on_canvas_y()))
 
             elif self.walk_direction == 'right':
-                self.__environment.win.blit(self.walkRight[self.__walkCount],
+                self._environment.win.blit(self.walkRight[ self._frame_count],
                                             (self.position_x, self.position_on_canvas_y()))
 
     def walk(self, x_steps=1, z_steps=0):
@@ -210,8 +190,8 @@ class Human(object):
 
         if not self.physics_state.rt.is_running:
 
-            self.physics_state.set_setup(x=self.position_x, y =self.position_on_canvas_y(),
-                                         surface_x =self.position_x)
+            self.physics_state.set_setup(x=self.position_x, y=self.position_y,
+                                         surface_x =self.position_x,surface_y = surface  )
             move_direction = {'right': 1, 'left': -1, 'center': 0, 'down': 0}
 
             sign = move_direction[self.move_direction]
@@ -234,7 +214,7 @@ class Human(object):
         pos_x = self.position_x+self.width*1.5
         self.weapon.activate(pos_y, pos_x)
 
-        self.play_sound(self.__sound_hit)
+        self.play_sound(self.sound_hit)
         pass
 
     def update_position(self, prop):
@@ -264,7 +244,7 @@ class Goblin(Human):
 
     def __init__(self, environment, **attr):
         super().__init__(environment, **attr)
-        self.images_path = ['Resources', 'images', 'Enemy']
+        self.images_path = full_file(['Resources', 'images', 'Enemy'])
 
         # create goblin
         self.power = 3
@@ -272,14 +252,54 @@ class Goblin(Human):
         self.walk_direction = 'left'
         self.high = 180
 
+        self.sound_hooch = full_file(['Resources', 'sound', 'wound.mp3'])
+        self.sound_dead = full_file(['Resources', 'sound', 'died.mp3'])
+        self.__attack = False
+        self.timer = RepeatedTimer()
+
     def create(self):
 
         self.walkRight = [self.load_image( 'R1E.png' ), self.load_image( 'R2E.png' ), self.load_image('R3E.png'),
                     self.load_image( 'R4E.png' ), self.load_image('R5E.png'), self.load_image('R6E.png'),
-                    self.load_image( 'R7E.png' ), self.load_image('R8E.png'),  self.load_image('R9E.png')]
+                    self.load_image( 'R7E.png' ), self.load_image('R8E.png'), self.load_image('R5E.png')]
 
         self.walkLeft = [self.load_image( 'L1E.png' ), self.load_image('L2E.png' ), self.load_image('L3E.png'),
                    self.load_image('L4E.png'), self.load_image('L5E.png' ), self.load_image('L6E.png'),
-                   self.load_image('L7E.png'), self.load_image('L8E.png' ), self.load_image('L9E.png')]
-        self.char = self.load_image('L1E.png' )
-        pass
+                   self.load_image('L7E.png'), self.load_image('L8E.png' ), self.load_image('L5E.png')]
+        self.standing = [self.load_image('L1E.png')]
+
+        self.attack_right =[self.load_image('R9E.png') , self.load_image('R10E.png'),self.load_image('R11E.png')]
+        self.attack_left = [self.load_image('L9E.png') , self.load_image('L10E.png'),self.load_image('L11E.png')]
+
+
+    def draw(self):
+
+
+        if self.__attack == False:
+            super().draw()
+
+        elif self.__attack == True:
+            self._frame_count += 1
+            if self.move_direction == 'left':
+
+
+                self._environment.win.blit( self.attack_left[self._frame_count % 3],
+                                             (self.position_x, self.position_on_canvas_y()) )
+            elif self.move_direction == 'right':
+
+                self._environment.win.blit( self.attack_right[self._frame_count% 3],
+                                             (self.position_x, self.position_on_canvas_y()) )
+
+
+    def attack(self):
+
+        self.timer.set_attr( timer_function=self.box_attack, start_input_args=[True],
+                             stop_function=self.box_attack, stop_input_args=[False],
+                             interval=0.1, limit=0.5)
+        self.timer.start()
+
+    def box_attack(self, state:bool=True):
+
+
+        self.__attack = state
+

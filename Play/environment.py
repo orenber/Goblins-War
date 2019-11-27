@@ -50,6 +50,10 @@ class Nature:
             self.bg_position_x2 = self.background.get_width()
         pass
 
+    def position_on_canvas_y(self, position_y):
+        new_position_y = self.win.get_height() - position_y
+        return new_position_y
+
 
     @property
     def images_path(self)->str:

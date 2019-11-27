@@ -95,7 +95,8 @@ class Gun(Weapons):
         if len(self.bullets) > 0:
 
             self.physics_objects.append(ObjectProp(surface_y=position_y, surface_x=position_x,
-                                        command=lambda prop: self.update_position(prop)))
+                                                   command_update=lambda prop: self.update_position(prop),
+                                                   command_stop=lambda prop: self.stop_position( prop ) ))
             self.physics_objects[-1].throw(self.velocity_y, self.velocity_x)
             self.bullet_drop()
             if len(self.physics_objects) > 0:
@@ -112,6 +113,16 @@ class Gun(Weapons):
             self.bullets_moving[0].position_y = prop.y
 
         pass
+
+
+    def stop_position(self,prop):
+
+        bullets_num = len(self.bullets_moving )
+        if bullets_num > 0:
+            self.bullets_moving.pop(0)
+
+
+
 
 
 class Bullet():
@@ -153,6 +164,7 @@ class Bullet():
     def draw(self, screen):
         object_position_y = int(self.position_canvas_y(screen))
         object_position_x = int(self.position_x)
+        print(str(self.position_x)+'+'+str(self.position_y))
         pygame.draw.circle(screen, self.color, (object_position_x, object_position_y), self.size)
 
 
