@@ -1,153 +1,236 @@
-from Utility.timer_utility import RepeatedTimer
-import math
-import matplotlib.pyplot as plt
+from Utility.timer_utility import TimerController
 from Utility import is_member
+import math
+from typing import Optional, Callable, Dict, Any
 
 
-class ObjectProp(object):
+class PhysicsObject:
+    """
+    A physics-based object with movement capabilities and collision detection.
 
-    def __init__(self, **attr):
+    Features:
+    - 2D/3D movement with gravity
+    - Customizable physics properties
+    - Event callbacks for updates and stops
+    - Timer-based movement control
+    """
 
-        self.x = 0
-        self.y = 0
-        self.z = 0
-        self.t = 0
-        self.angle = 0
-        self.speed = 0.1
-        self.velocity = 0
-        self.mass = 1
-        self.time_stamp = 0.01
-        self._stable = True
-        self.bottom = 0
+    def __init__(self, **kwargs):
+        """
+        Initialize the physics object with default or provided properties.
 
+        Args:
+            **kwargs: Configuration properties (see set_setup for options)
+        """
+        # Physical properties
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        self.angle = 0.0
+        self.velocity_x = 0.0
+        self.velocity_y = 0.0
+        self.velocity_z = 0.0
+        self.mass = 1.0
+        self.time_step = 0.01
         self.gravity = 9.8
-        self.surface_x = 0
-        self.surface_y = 0
-        self.surface_z = 0
-        self.rt = RepeatedTimer(self.time_stamp, self._movement)
+        self.elasticity = 0.5  # Bounciness coefficient
 
-        # protected
-        self.__command = []
-        self.__command_stop =[]
+        # Environmental boundaries
+        self.bottom = 0.0
+        self.surface_x = 0.0
+        self.surface_y = 0.0
+        self.surface_z = 0.0
 
-        self.set_setup(**attr)
-        pass
+        # State tracking
+        self._is_stable = True
+        self._elapsed_time = 0.0
+
+        # Callbacks
+        self._on_update: Optional[Callable] = None
+        self._on_stop: Optional[Callable] = None
+
+        # Movement controller
+        self._movement_timer = TimerController(
+            interval=self.time_step,
+            start_func=self._update_movement
+        )
+
+        # Apply any custom configuration
+        self.set_setup(**kwargs)
 
     @property
-    def command_update(self):
-        return self.__command
-
-    @command_update.setter
-    def command_update(self, command):
-        # check if the command is lambda expression
-        if callable(command):
-
-            self.__command = command
+    def position(self) -> tuple:
+        """Get the current (x, y, z) position as a tuple"""
+        return self.x, self.y, self.z
 
     @property
-    def command_stop(self):
-        return self.__command_stop
+    def velocity(self) -> tuple:
+        """Get the current (vx, vy, vz) velocity as a tuple"""
+        return self.velocity_x, self.velocity_y, self.velocity_z
 
-    @command_stop.setter
-    def command_stop(self, command):
-        # check if the command is lambda expression
-        if callable(command):
+    @property
+    def is_moving(self) -> bool:
+        """Check if the object is currently in motion"""
+        return not self._is_stable
 
-            self.__command_stop = command
+    @property
+    def on_update(self) -> Optional[Callable]:
+        """Get the current update callback function"""
+        return self._on_update
 
-    def set_setup(self, **prop):
+    @on_update.setter
+    def on_update(self, callback: Optional[Callable]) -> None:
+        """Set the update callback function"""
+        if callback is None or callable(callback):
+            self._on_update = callback
 
-        default = ['x', 'y', 'z', 'angle', 'v', 't', 'mass', 'bottom', 'gravity',
-                   'surface_x', 'surface_y', 'surface_z', 'time_stamp',
-                   'command_update', 'command_stop']
-        # check if filed value is inside defulte filed
-        fileds = list(prop.keys())
-        (state, diff) = is_member(fileds, default)
+    @property
+    def on_stop(self) -> Optional[Callable]:
+        """Get the current stop callback function"""
+        return self._on_stop
 
+    @on_stop.setter
+    def on_stop(self, callback: Optional[Callable]) -> None:
+        """Set the stop callback function"""
+        if callback is None or callable(callback):
+            self._on_stop = callback
 
-        assert state, 'their is no such member' + str(diff)
-        # setup = default.copy()
-        # setup.update(prop)
-        for name in prop.keys():
-            self.__setattr__(name, prop[name])
+    def set_setup(self, **properties) -> None:
+        """
+        Configure multiple object properties at once.
 
-    def throw(self,vx: float = 0, vy: float = 0):
+        Args:
+            **properties: Key-value pairs of properties to set
 
-        self.rt.start_input_args = vx, vy
-        self.rt.stop_function = self._stop_movment
+        Raises:
+            ValueError: If any property name is invalid
+        """
+        valid_properties = {
+            'x', 'y', 'z', 'angle', 'velocity_x', 'velocity_y', 'velocity_z',
+            'mass', 'bottom', 'gravity', 'elasticity', 'surface_x', 'surface_y',
+            'surface_z', 'time_step', 'on_update', 'on_stop'
+        }
 
-        try:
-            self.rt.start()
+        # Validate property names
+        property_names = list(properties.keys())
+        is_valid, invalid = is_member(property_names, valid_properties)
+        if not is_valid:
+            raise ValueError(f"Invalid properties: {invalid}")
 
-            # your long-running job goes here...
+        # Set properties
+        for name, value in properties.items():
+            setattr(self, name, value)
 
-        finally:
-            pass
+        # Update timer interval if time_step changed
+        if 'time_step' in properties:
+            self._movement_timer.interval = self.time_step
 
+    def throw(self, velocity_x: float, velocity_y: float, velocity_z: float = 0) -> None:
+        """
+        Launch the object with specified velocities.
 
-    def _movement(self, vx: float = 0, vy: float = 0,vz: float = 0):
-        self._stable = self.rt.is_running
-        self.t += self.time_stamp + self.speed
-        t = self.t
-        # self.z = self.surface_z + vz * t
-        self.x = self.surface_x + vx * t
-        self.y = self.surface_y + vy * t - 0.5 * self.gravity * math.pow(t, 2)
+        Args:
+            velocity_x: Horizontal velocity (x-axis)
+            velocity_y: Vertical velocity (y-axis)
+            velocity_z: Depth velocity (z-axis, optional)
+        """
+        # Set initial velocities
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
+        self.velocity_z = velocity_z
 
-        if self.bottom >= self.y:
+        # Reset state
+        self._elapsed_time = 0.0
+        self._is_stable = False
 
-            self.rt.stop()
-            self._stable = True
-            self.t = 0
+        # Configure and start movement timer
+        self._movement_timer.start_input_args = (velocity_x, velocity_y, velocity_z)
+        self._movement_timer.stop_function = self._handle_stop
+        self._movement_timer.start()
 
-        self.update()
+    def _update_movement(self, velocity_x: float, velocity_y: float, velocity_z: float) -> None:
+        """
+        Update the object's position based on physics calculations.
 
-    def _stop_movment(self):
-        if callable(self.command_stop):
-            self.command_stop(self)
+        Args:
+            velocity_x: Initial x velocity
+            velocity_y: Initial y velocity
+            velocity_z: Initial z velocity
+        """
+        self._elapsed_time += self.time_step
 
-    def update(self):
-        if callable(self.command_update):
-            self.command_update(self)
+        # Update position using kinematic equations
+        t = self._elapsed_time
+        self.x = self.surface_x + velocity_x * t
+        self.y = self.surface_y + velocity_y * t - 0.5 * self.gravity * t ** 2
+        self.z = self.surface_z + velocity_z * t
 
+        # Check for ground collision
+        if self.y <= self.bottom:
+            self.y = self.bottom
 
+            # Apply bounce if object has elasticity
+            if self.elasticity > 0:
+                self.velocity_y = -self.velocity_y * self.elasticity
+                self.surface_y = self.bottom
+                self.surface_x = self.x
+                self._elapsed_time = 0.0
+            else:
+                self._movement_timer.stop()
 
+        # Trigger update callback
+        if callable(self._on_update):
+            self._on_update(self)
 
-fig = plt.figure()
-ax = plt.axes( xlim=(0, 10000), ylim=(0, 10000) )
-ball_scatter = ax.scatter( 0, 0, c='r', marker='o' )
-ball_scatter2 = ax.scatter( 0, 0, c='g', marker='o' )
+    def _handle_stop(self) -> None:
+        """Handle movement stopping and callbacks"""
+        self._is_stable = True
+        if callable(self._on_stop):
+            self._on_stop(self)
 
-def update_position(prop):
-    print( "ball_1  X:{} , Y:{}".format( prop.x, prop.y ) )
-
-    pass
-
-
-def update_position2(prop2):
-    print("ball_2  X:{} , Y:{}".format(prop2.x, prop2.y))
-    pass
-
-
-def stop_ball(prop2):
-    print( "ball_2 stop it  X:{} , Y:{}".format( prop2.x, prop2.y ) )
+    def stop(self) -> None:
+        """Immediately stop all movement"""
+        self._movement_timer.stop()
 
 
 def main():
+    """Demonstration of PhysicsObject usage"""
 
-    ball = ObjectProp(time_stamp=0.01)
-    ball.command_update = lambda prop: update_position(prop)
+    def log_position(obj: PhysicsObject):
+        print(f"Object at X:{obj.x:.2f}, Y:{obj.y:.2f}")
 
-    ball2 = ObjectProp(time_stamp=0.01)
-    ball2.command_update = lambda prop: update_position2(prop)
-    ball2.command_update = lambda prop: update_position2(prop)
-    ball2.command_stop = lambda prop: stop_ball(prop)
+    def log_stop(obj: PhysicsObject):
+        print(f"Object stopped at X:{obj.x:.2f}, Y:{obj.y:.2f}")
 
-    ball.throw(10,10)
-    ball2.throw(150,10)
+    # Create and configure physics objects
+    ball1 = PhysicsObject(
+        time_step=0.01,
+        gravity=9.8,
+        bottom=0,
+        on_update=log_position
+    )
+
+    ball2 = PhysicsObject(
+        time_step=0.01,
+        gravity=9.8,
+        bottom=0,
+        elasticity=0.7,  # Make this ball bouncy
+        on_update=log_position,
+        on_stop=log_stop
+    )
+
+    # Throw the objects
+    ball1.throw(10, 10)
+    ball2.throw(15, 10)
+
+    # Keep program running while objects move
+    try:
+        while ball1.is_moving or ball2.is_moving:
+            pass
+    except KeyboardInterrupt:
+        ball1.stop()
+        ball2.stop()
 
 
 if __name__ == "__main__":
     main()
-
-
-
