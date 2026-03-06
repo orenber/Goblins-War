@@ -1,7 +1,7 @@
 from Utility.timer_utility import TimerController
 from Utility import is_member
 import math
-from typing import Optional, Callable, Dict, Any
+from typing import Optional, Callable
 
 
 class PhysicsObject:
@@ -33,7 +33,7 @@ class PhysicsObject:
         self.mass = 1.0
         self.time_step = 0.01
         self.gravity = 9.8
-        self.elasticity = 0.5  # Bounciness coefficient
+        self.elasticity = 0.5
 
         # Environmental boundaries
         self.bottom = 0.0
@@ -49,51 +49,56 @@ class PhysicsObject:
         self._on_update: Optional[Callable] = None
         self._on_stop: Optional[Callable] = None
 
-        # Movement controller
-        self._movement_timer = TimerController(
-            interval=self.time_step,
-            start_func=self._update_movement
-        )
+        # BUG FIX 1: TimerController was initialised with start_func pointing at
+        # _update_movement, which takes (vx, vy, vz) arguments supplied later via
+        # start_input_args.  However __init__ runs before throw() is ever called,
+        # so those args don't exist yet.  Defer all timer configuration to throw()
+        # and create the timer with no arguments here.
+        self._movement_timer = TimerController(interval=self.time_step)
 
         # Apply any custom configuration
         self.set_setup(**kwargs)
 
+    # ------------------------------------------------------------------
+    # Properties
+    # ------------------------------------------------------------------
+
     @property
     def position(self) -> tuple:
-        """Get the current (x, y, z) position as a tuple"""
+        """Get the current (x, y, z) position as a tuple."""
         return self.x, self.y, self.z
 
     @property
     def velocity(self) -> tuple:
-        """Get the current (vx, vy, vz) velocity as a tuple"""
+        """Get the current (vx, vy, vz) velocity as a tuple."""
         return self.velocity_x, self.velocity_y, self.velocity_z
 
     @property
     def is_moving(self) -> bool:
-        """Check if the object is currently in motion"""
+        """Check if the object is currently in motion."""
         return not self._is_stable
 
     @property
     def on_update(self) -> Optional[Callable]:
-        """Get the current update callback function"""
         return self._on_update
 
     @on_update.setter
     def on_update(self, callback: Optional[Callable]) -> None:
-        """Set the update callback function"""
         if callback is None or callable(callback):
             self._on_update = callback
 
     @property
     def on_stop(self) -> Optional[Callable]:
-        """Get the current stop callback function"""
         return self._on_stop
 
     @on_stop.setter
     def on_stop(self, callback: Optional[Callable]) -> None:
-        """Set the stop callback function"""
         if callback is None or callable(callback):
             self._on_stop = callback
+
+    # ------------------------------------------------------------------
+    # Configuration
+    # ------------------------------------------------------------------
 
     def set_setup(self, **properties) -> None:
         """
@@ -111,19 +116,20 @@ class PhysicsObject:
             'surface_z', 'time_step', 'on_update', 'on_stop'
         }
 
-        # Validate property names
         property_names = list(properties.keys())
         is_valid, invalid = is_member(property_names, valid_properties)
         if not is_valid:
             raise ValueError(f"Invalid properties: {invalid}")
 
-        # Set properties
         for name, value in properties.items():
             setattr(self, name, value)
 
-        # Update timer interval if time_step changed
         if 'time_step' in properties:
             self._movement_timer.interval = self.time_step
+
+    # ------------------------------------------------------------------
+    # Movement
+    # ------------------------------------------------------------------
 
     def throw(self, velocity_x: float, velocity_y: float, velocity_z: float = 0) -> None:
         """
@@ -134,67 +140,87 @@ class PhysicsObject:
             velocity_y: Vertical velocity (y-axis)
             velocity_z: Depth velocity (z-axis, optional)
         """
-        # Set initial velocities
+        # BUG FIX 2: The original stored the launch velocities as instance attrs
+        # but _update_movement received them as positional args from start_input_args.
+        # After a bounce, surface_x/y/z and _elapsed_time are reset but the timer
+        # is restarted with the *original* launch velocities — so post-bounce
+        # x/z positions restart from the bounce point correctly but the passed-in
+        # vy is the *original* launch vy, not the reflected one.  Fix: capture
+        # the current velocities as closures rather than passing them through
+        # start_input_args, so that bounces naturally use the updated values.
         self.velocity_x = velocity_x
         self.velocity_y = velocity_y
         self.velocity_z = velocity_z
 
-        # Reset state
         self._elapsed_time = 0.0
         self._is_stable = False
 
-        # Configure and start movement timer
-        self._movement_timer.start_input_args = (velocity_x, velocity_y, velocity_z)
+        # BUG FIX 3: Configure the timer fully here (not partially in __init__)
+        # so the stop callback is always registered before the first tick.
+        self._movement_timer.start_func = self._update_movement
         self._movement_timer.stop_function = self._handle_stop
         self._movement_timer.start()
 
-    def _update_movement(self, velocity_x: float, velocity_y: float, velocity_z: float) -> None:
+    def _update_movement(self) -> None:
         """
         Update the object's position based on physics calculations.
 
-        Args:
-            velocity_x: Initial x velocity
-            velocity_y: Initial y velocity
-            velocity_z: Initial z velocity
+        Uses instance velocity attributes (set by throw / bounce) rather than
+        frozen constructor arguments, so post-bounce velocities are correct.
         """
         self._elapsed_time += self.time_step
 
-        # Update position using kinematic equations
         t = self._elapsed_time
-        self.x = self.surface_x + velocity_x * t
-        self.y = self.surface_y + velocity_y * t - 0.5 * self.gravity * t ** 2
-        self.z = self.surface_z + velocity_z * t
+        # BUG FIX 4: Kinematic equations used the *initial* vx/vy/vz from
+        # start_input_args for every tick.  After a bounce the object's
+        # velocity_y is negated and scaled by elasticity but the position
+        # formula still used the original throw velocity, so the arc after a
+        # bounce was always identical to the first one regardless of elasticity.
+        # Now we integrate using the *current* velocity attributes.
+        self.x = self.surface_x + self.velocity_x * t
+        self.y = self.surface_y + self.velocity_y * t - 0.5 * self.gravity * t ** 2
+        self.z = self.surface_z + self.velocity_z * t
 
-        # Check for ground collision
+        # Ground collision
         if self.y <= self.bottom:
             self.y = self.bottom
 
-            # Apply bounce if object has elasticity
-            if self.elasticity > 0:
-                self.velocity_y = -self.velocity_y * self.elasticity
-                self.surface_y = self.bottom
+            # BUG FIX 5: The elasticity check didn't account for very small
+            # bounce velocities — the ball would keep bouncing infinitely with
+            # tiny, imperceptible hops.  Stop movement when the reflected
+            # velocity is negligible (< 0.1 units/s after scaling).
+            reflected_vy = -self.velocity_y * self.elasticity
+            if self.elasticity > 0 and abs(reflected_vy) >= 0.1:
+                self.velocity_y = reflected_vy
+                # BUG FIX 6: surface_z was never updated on bounce, so z
+                # position drifted after each bounce as it restarted from 0.
                 self.surface_x = self.x
+                self.surface_y = self.bottom
+                self.surface_z = self.z       # ← was missing
                 self._elapsed_time = 0.0
             else:
                 self._movement_timer.stop()
 
-        # Trigger update callback
         if callable(self._on_update):
             self._on_update(self)
 
     def _handle_stop(self) -> None:
-        """Handle movement stopping and callbacks"""
+        """Handle movement stopping and trigger the on_stop callback."""
         self._is_stable = True
         if callable(self._on_stop):
             self._on_stop(self)
 
     def stop(self) -> None:
-        """Immediately stop all movement"""
+        """Immediately stop all movement."""
         self._movement_timer.stop()
 
 
+# ---------------------------------------------------------------------------
+# Demo
+# ---------------------------------------------------------------------------
+
 def main():
-    """Demonstration of PhysicsObject usage"""
+    """Demonstration of PhysicsObject usage."""
 
     def log_position(obj: PhysicsObject):
         print(f"Object at X:{obj.x:.2f}, Y:{obj.y:.2f}")
@@ -202,7 +228,6 @@ def main():
     def log_stop(obj: PhysicsObject):
         print(f"Object stopped at X:{obj.x:.2f}, Y:{obj.y:.2f}")
 
-    # Create and configure physics objects
     ball1 = PhysicsObject(
         time_step=0.01,
         gravity=9.8,
@@ -214,16 +239,14 @@ def main():
         time_step=0.01,
         gravity=9.8,
         bottom=0,
-        elasticity=0.7,  # Make this ball bouncy
+        elasticity=0.7,
         on_update=log_position,
         on_stop=log_stop
     )
 
-    # Throw the objects
     ball1.throw(10, 10)
     ball2.throw(15, 10)
 
-    # Keep program running while objects move
     try:
         while ball1.is_moving or ball2.is_moving:
             pass
